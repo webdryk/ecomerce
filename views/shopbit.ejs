@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Items</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Shop Bit Electronics</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#cartModal">
+                            Cart <span class="badge bg-primary" id="cartCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Bar -->
+    <section class="py-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <input type="text" id="searchName" class="form-control" placeholder="Search by name">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <input type="number" id="minPrice" class="form-control" placeholder="Min price">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <input type="number" id="maxPrice" class="form-control" placeholder="Max price">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <select id="searchRating" class="form-select">
+                        <option value="">Filter by rating</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars & up</option>
+                        <option value="3">3 Stars & up</option>
+                        <option value="2">2 Stars & up</option>
+                        <option value="1">1 Star & up</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Items Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center">Shop Our Products</h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-4" id="itemsContainer">
+                <% items.forEach(item => { %>
+                    <div class="col">
+                        <div class="card d-flex flex-column">
+                            <img src="<%= item.image %>" class="card-img-top" alt="<%= item.name %>">
+                            <div class="card-body">
+                                <h5 class="card-title"><%= item.name %></h5>
+                                <p class="card-text"><%= item.description %></p>
+                                <p><strong>Price:</strong> $<%= item.price %></p>
+                                <p><strong>Rating:</strong> <%= item.rating %>/5</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal" onclick="showItemDetails(<%= JSON.stringify(item) %>)">View Details</button>
+                                    <button class="btn btn-secondary" onclick="addToCart(<%= JSON.stringify(item) %>)">Add to Cart</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+
+    <!-- Item Modal Template -->
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="itemModalLabel">Item Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img src="https://via.placeholder.com/300" class="img-fluid mb-3" alt="Item" id="modalItemImage">
+                    <p id="modalItemDescription">Full details of the selected item will appear here.</p>
+                    <p><strong>Price:</strong> $<span id="modalItemPrice">0</span></p>
+                    <p><strong>Rating:</strong> <span id="modalItemRating">0</span>/5</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartModalLabel">Your Cart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group mb-3" id="cartItems">
+                        <li class="list-group-item">Your cart is empty.</li>
+                    </ul>
+                    <p class="text-end"><strong>Total: $<span id="cartTotal">0</span></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="checkoutButton">Checkout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const cart = [];
+
+        function updateCartCount() {
+            document.getElementById('cartCount').innerText = cart.length;
+        }
+
+        function updateCartModal() {
+            const cartItemsContainer = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            cartItemsContainer.innerHTML = '';
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<li class="list-group-item">Your cart is empty.</li>';
+                cartTotal.innerText = 0;
+                return;
+            }
+
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price;
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                listItem.innerHTML = `
+                    <span>${item.name} - $${item.price}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removeFromCart(${index})">&times;</button>
+                `;
+                cartItemsContainer.appendChild(listItem);
+            });
+
+            cartTotal.innerText = total;
+        }
+
+        function addToCart(item) {
+            cart.push(item);
+            updateCartCount();
+            updateCartModal();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            updateCartModal();
+        }
+
+        function showItemDetails(item) {
+            document.getElementById('itemModalLabel').innerText = item.name;
+            document.getElementById('modalItemImage').src = item.image;
+            document.getElementById('modalItemDescription').innerText = item.description;
+            document.getElementById('modalItemPrice').innerText = item.price;
+            document.getElementById('modalItemRating').innerText = item.rating;
+        }
+
+         // Inject items passed from server
+    const items = <%- JSON.stringify(items) %>;
+
+    // Filter Items
+    function filterItems() {
+        const name = document.getElementById('searchName').value.toLowerCase();
+        const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+        const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+        const rating = parseFloat(document.getElementById('searchRating').value) || 0;
+
+        const filteredItems = items.filter(item => {
+            return (
+                item.name.toLowerCase().includes(name) &&
+                item.price >= minPrice &&
+                item.price <= maxPrice &&
+                item.rating >= rating
+            );
+        });
+
+        renderItems(filteredItems);
+    }
+
+    // Render Items
+    function renderItems(filteredItems) {
+        const container = document.getElementById('itemsContainer');
+        container.innerHTML = ''; // Clear existing items
+
+        if (filteredItems.length === 0) {
+            container.innerHTML = '<p class="text-center">No items found.</p>';
+            return;
+        }
+
+        filteredItems.forEach(item => {
+            const col = document.createElement('div');
+            col.className = 'col';
+
+            col.innerHTML = `
+                <div class="card d-flex flex-column">
+                    <img src="${item.image}" class="card-img-top" alt="${item.name}">
+                    <div class="card-body">
+                        <h5 class="card-title">${item.name}</h5>
+                        <p class="card-text">${item.description}</p>
+                        <p><strong>Price:</strong> $${item.price}</p>
+                        <p><strong>Rating:</strong> ${item.rating}/5</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal" onclick='showItemDetails(${JSON.stringify(item)})'>View Details</button>
+                            <button class="btn btn-secondary" onclick='addToCart(${JSON.stringify(item)})'>Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(col);
+        });
+    }
+
+    // Initial Render of All Items
+    renderItems(items);
+
+    // Event Listeners for Filtering
+    document.getElementById('searchName').addEventListener('input', filterItems);
+    document.getElementById('minPrice').addEventListener('input', filterItems);
+    document.getElementById('maxPrice').addEventListener('input', filterItems);
+    document.getElementById('searchRating').addEventListener('change', filterItems);
+
+        document.getElementById('checkoutButton').addEventListener('click', () => {
+            alert('Thank you for your purchase!');
+            cart.length = 0; // Clear cart
+            updateCartModal();
+            updateCartCount();
+        });
+    </script>
+     
+</body>
+</html>
